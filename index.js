@@ -9,7 +9,7 @@ const app = express();
 const MongoClient = require("mongodb").MongoClient;
  const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xu8lv.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 //const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.swu9d.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
-const port = 5000;
+const port = process.env.PORT||5000;
 
 app.get("/", (req, res) => {
   res.send("hello world");
@@ -162,8 +162,13 @@ app.post("/isDoctor", (req, res) => {
     // await client.close();
 }
 }
+
 run().catch(console.dir);
-app.listen(port, () => {
-  console.log(`listening at ${port}`)
+
+app.get('/', (req, res) => {
+    res.send('Hello Doctors portal!')
 })
 
+app.listen(port, () => {
+    console.log(`listening at ${port}`)
+})
