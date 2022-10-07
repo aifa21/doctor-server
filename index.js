@@ -6,10 +6,14 @@ const fileUpload = require("express-fileupload");
 require("dotenv").config();
 const ObjectId = require('mongodb').ObjectId;
 const app = express();
+
 const MongoClient = require("mongodb").MongoClient;
  const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xu8lv.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
-//const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.swu9d.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+
 const port = process.env.PORT||5000;
+//hotel-booking-a597f
+
+
 
 app.get("/", (req, res) => {
   res.send("hello world");
@@ -28,8 +32,6 @@ async function run() {
   const appointmentsCollection = client.db("doctorsPortal").collection("appointments");
   const prescriptionCollection = client.db("doctorsPortal").collection("prescriptions");
   const userCollection = client.db("doctorsPortal").collection("users");
- 
-
   const doctorCollection = client.db("doctorsPortal").collection("doctors");
   // POST
 
@@ -76,20 +78,33 @@ app.post("/isDoctor", (req, res) => {
           res.send(doctors.length > 0);
       })
 })
+
+
   // add doctors
-  app.post("/addDoctors", (req, res) => {
+  app.post("/addDoctors", async(req, res) => {
     const doctors = req.body;
-    console.log(doctors);
-    doctorCollection.insertOne(doctors).then((result) => {
-      res.send(result.insertCount > 0);
-    });
+    console.log("doc",doctors);
+    const result = await doctorCollection.insertOne(doctors);
+      res.send(result);
+  });
+
+  app.get("/singleDoctor",async (req, res) => {
+    const doctorEmail = req.query.email;
+    const doctorQuery = { email: doctorEmail }
+   
+     const doctorCursor = doctorCollection.find( doctorQuery );
+    
+     const doctor = await doctorCursor.toArray();
+     console.log("qqq",doctor);
+             res.json(doctor);
+  
   });
   //add users
 
  app.post("/users", async(req, res) => {
     const users = req.body;
     console.log(users);
-    const result=awaitusersCollection.insertOne(doctors);
+    const result=await usersCollection.insertOne(doctors);
     console.log(result);
     res.send(result);
    
@@ -106,13 +121,36 @@ app.post("/isDoctor", (req, res) => {
   // .. update status ...
   app.patch('/updateStatus/:id', (req, res) => {
     const id = ObjectId(req.params.id)
-    console.log( req.body.status);
+    console.log(id);
     appointmentsCollection.updateOne({ _id: id }, {
     $set: { status: req.body.status, color: req.body.color }
    })
     .then(result => {
       // console.log(result);
       }) ;
+    });
+
+    //.. UPDATE DOCTOR'S INFORMATION  ...
+    app.put('/addDoctors/:id', async (req, res) => {
+      const user = req.query;
+      const id = ObjectId(req.params.id)
+			console.log("idd",id);
+			const updatedReq = req.body;
+			console.log("Comming form UI", updatedReq);
+      const options = { upsert: true };
+       const updateDoc = {
+         $set: {   
+                   name:req.body.name,
+                   degree:req.body.degree,
+                   designation:req.body.designation,
+                   days:req.body.days,
+                   time:req.body.time,
+                   img:req.body.img
+                  }
+       };
+       const result = await doctorCollection .updateOne({_id:id}, updateDoc, options);
+    
+      res.send();
     });
 
    //api for deleting user by admin
@@ -133,9 +171,10 @@ app.post("/isDoctor", (req, res) => {
   app.get("/specificAppointments",async (req, res) => {
     const email = req.query.email;
     const query = { email: email }
-    console.log(query);
+   
      const cursor = appointmentsCollection.find(query);
      const appointments = await cursor.toArray();
+     console.log("qc",appointments);
              res.json(appointments);
   
   });
@@ -144,6 +183,16 @@ app.post("/isDoctor", (req, res) => {
     prescriptionCollection.find({}).toArray((err, documents) => {
       res.send(documents);
     });
+  });
+  //.specific prescription
+  app.get("/specificPrescription",async (req, res) => {
+    const email = req.query.email;
+    const query = { email: email }
+    console.log(query);
+     const cursor = prescriptionCollection.find(query);
+     const prescription = await cursor.toArray();
+             res.json(prescription);
+  
   });
 
   app.get("/addDoctors", (req, res) => {
